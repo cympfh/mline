@@ -74,6 +74,17 @@ end
 s_from = station_name_trim ARGV[0]
 s_to = station_name_trim ARGV[1]
 
+# input check
+puts '[WARN] -l specified too large (>5)' if opts[:l] > 5
+if s2l[s_from] == nil
+  puts "[ERROR] The station #{s_from} is unknown"
+  exit
+end
+if s2l[s_to] == nil
+  puts "[ERROR] The station #{s_to} is unknown"
+  exit
+end
+
 #
 # BFS
 #
