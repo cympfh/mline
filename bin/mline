@@ -113,6 +113,7 @@ while not q.empty?
     next if last_line == l
     next if line_times(l, history) + 1 > opts[:n]
     l2s[l].each do |t|
+      next if last_station == t
       next if t != s_to && (s2l[t] == nil || s2l[t].size == 1) # prune
       q.push (history + [[t, l]])
     end
