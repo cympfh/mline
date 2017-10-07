@@ -100,7 +100,7 @@ while not q.empty?
   last_item = history[history.size - 1]
   last_station = last_item[0]
   last_line = last_item[1]
-  if last_station == s_to
+  if history.size > 1 && last_station == s_to
     path_print history
     ways += 1
     next
