@@ -3,14 +3,12 @@
 Search your route.
 
 ```
-   time ./bin/mline 神保町 三田
+   time mline 神保町 三田 -l 3
 神保町 -> 三田 [三田線]
-神保町 -> 神保町 [半蔵門線] -> 三田 [三田線]
 神保町 -> 大手町 [半蔵門線] -> 三田 [三田線]
 神保町 -> 押上 [半蔵門線] -> 三田 [浅草線]
-神保町 -> 神保町 [新宿線] -> 三田 [三田線]
-Found 5 routes.
-./bin/mline 神保町 三田  0.05s user 0.01s system 95% cpu 0.058 total
+Found 3 routes.
+mline 神保町 三田 -l 3  0.14s user 0.02s system 99% cpu 0.161 total
 ```
 
 ```
