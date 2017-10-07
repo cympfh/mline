@@ -1,0 +1,106 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'optparse'
+
+def usage
+  puts <<EOM
+SYNOPSIS: line <station-from> <station-to>
+EOM
+  exit
+end
+
+def path_print(h)
+  a = h[0][0]
+  h.drop(1).each do |item|
+    a += " -> #{item[0]} [#{item[1]}]"
+  end
+  puts a
+end
+
+def line_times(line, h)
+  cx = 0
+  h.each do |item|
+    cx += 1 if item[1] == line
+  end
+  cx
+end
+
+l2s = {} # l2s[line] = [station]
+s2l = {} # s2l[station] = [line]
+
+def station_name_trim(str)
+  str.gsub(/駅$/, '')
+end
+
+#
+# load database
+#
+data = JSON.load File.open("#{File.dirname(__FILE__)}/../lines.json").read
+data.each do |line|
+  lname = line['name']
+  l2s[lname] = []
+  line['stations'].each do |full|
+    full.split(':').each do |sname|
+      sname = station_name_trim sname
+      l2s[lname] << sname
+      if s2l[sname]
+        s2l[sname] << lname
+      else
+        s2l[sname] = [lname]
+      end
+    end
+  end
+end
+
+#
+# optparse
+#
+opts = {n: 1, l: 3}
+OptionParser.new do |opt|
+  opt.on('-n INT', "Upper times to use a single line (default: #{opts[:n]})") { |v|
+    opts[:n] = v.to_i
+  }
+  opt.on('-l INT', "Upper number of stations in the route (i.e. the length) (default: #{opts[:l]})") { |v|
+    opts[:l] = v.to_i
+  }
+  opt.parse! ARGV
+end
+
+if ARGV.size < 2
+  usage
+end
+
+s_from = station_name_trim ARGV[0]
+s_to = station_name_trim ARGV[1]
+
+#
+# BFS
+#
+ways = 0
+q = Queue.new
+q.push [[s_from]]
+while not q.empty?
+  history = q.pop
+  last_item = history[history.size - 1]
+  last_station = last_item[0]
+  last_line = last_item[1]
+  if last_station == s_to
+    path_print history
+    ways += 1
+    next
+  end
+  break if history.size > opts[:l]
+  break if s2l[last_station] == nil
+  s2l[last_station].each do |l|
+    next if l2s[l] == nil
+    next if last_line == l
+    next if line_times(l, history) + 1 > opts[:n]
+    l2s[l].each do |t|
+      next if t != s_to && (s2l[t] == nil || s2l[t].size == 1) # prune
+      q.push (history + [[t, l]])
+    end
+  end
+end
+
+puts "Found #{ways} routes."
