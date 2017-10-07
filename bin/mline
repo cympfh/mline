@@ -92,7 +92,11 @@ ways = 0
 q = Queue.new
 q.push [[s_from]]
 while not q.empty?
+
   history = q.pop
+  break if history.size > opts[:l]
+
+  # last node
   last_item = history[history.size - 1]
   last_station = last_item[0]
   last_line = last_item[1]
@@ -101,8 +105,9 @@ while not q.empty?
     ways += 1
     next
   end
-  break if history.size > opts[:l]
+
   break if s2l[last_station] == nil
+
   s2l[last_station].each do |l|
     next if l2s[l] == nil
     next if last_line == l
