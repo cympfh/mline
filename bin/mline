@@ -56,7 +56,7 @@ end
 #
 # optparse
 #
-opts = {n: 1, l: 3}
+opts = {n: 1, l: 4}
 OptionParser.new do |opt|
   opt.on('-n INT', "Upper times to use a single line (default: #{opts[:n]})") { |v|
     opts[:n] = v.to_i
