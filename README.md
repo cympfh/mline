@@ -12,3 +12,7 @@ Search your route.
 Found 5 routes.
 ./bin/mline 神保町 三田  0.05s user 0.01s system 95% cpu 0.058 total
 ```
+
+## lines.json
+
+All supported lines and its stations are described in `lines.json`.
