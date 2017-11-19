@@ -73,13 +73,19 @@ end
 #
 # optparse
 #
-opts = {l: 4, w: 1}
+opts = {l: 4, w: 1, margin: 2}
 OptionParser.new do |opt|
   opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
     opts[:l] = v.to_i
+    puts '[WARN] -l specified too large (>5)' if opts[:l] > 5
   }
   opt.on('-w INT', "Weight of train-change (default: #{opts[:l]})") { |v|
     opts[:w] = v.to_i
+  }
+  opt.on('--margin INT', "このくらいなら遅くても許す") { |v|
+    opts[:margin] = v.to_i
+    puts '[WARN] --margin specified too large (>5)' if opts[:margin] > 5
+    puts '[ERROR] --margin must be zero or positive' if opts[:margin] < 0
   }
   opt.parse! ARGV
 end
@@ -91,8 +97,6 @@ end
 s_from = station_name_trim ARGV[0]
 s_to = station_name_trim ARGV[1]
 
-# input check
-puts '[WARN] -l specified too large (>5)' if opts[:l] > 5
 if s2l[s_from] == nil
   puts "[ERROR] The station #{s_from} is unknown"
   exit
@@ -157,14 +161,11 @@ while not q.empty?
     next if t != s_to && contains(history, t)
     next if t != s_to && line_count(history, l) >= 3
     d2 = d - distance[last_station][t] - opts[:w]
-    if last_station == s_from
-      p [d2, history + [[t, l]]]
-    end
 
     if memo[t] == nil
       memo[t] = d2
-    elsif memo[t] < d2
-      memo[t] = d2
+    elsif memo[t] < d2 + opts[:margin]
+      memo[t] = [memo[t], d2].max
     else
       next
     end
