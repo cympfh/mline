@@ -4,6 +4,8 @@ require 'json'
 require 'optparse'
 require 'pqueue'
 
+Signal.trap("PIPE", "EXIT")
+
 def usage
   puts <<EOM
 SYNOPSIS: line <station-from> <station-to>
