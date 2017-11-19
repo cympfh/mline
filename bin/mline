@@ -2,6 +2,7 @@
 
 require 'json'
 require 'optparse'
+require 'pqueue'
 
 def usage
   puts <<EOM
@@ -18,16 +19,9 @@ def path_print(h)
   puts a
 end
 
-def line_times(line, h)
-  cx = 0
-  h.each do |item|
-    cx += 1 if item[1] == line
-  end
-  cx
-end
-
 l2s = {} # l2s[line] = [station]
 s2l = {} # s2l[station] = [line]
+distance = {} # distance[station1][station2]; station1 and station2 must belong to a line
 
 def station_name_trim(str)
   str.gsub(/駅$/, '')
@@ -40,6 +34,10 @@ data = JSON.load File.open("#{File.dirname(__FILE__)}/../lines.json").read
 data.each do |line|
   lname = line['name']
   l2s[lname] = []
+
+  indices = {}
+  id = 0
+
   line['stations'].each do |full|
     full.split(':').each do |sname|
       sname = station_name_trim sname
@@ -49,6 +47,16 @@ data.each do |line|
       else
         s2l[sname] = [lname]
       end
+      indices[sname] = id
+    end
+    id += 1
+  end
+
+  # distance pre-calc
+  indices.keys.each do |u|
+    distance[u] = {} if distance[u] == nil
+    indices.keys.each do |v|
+      distance[u][v] = (indices[v] - indices[u]).abs
     end
   end
 end
@@ -56,13 +64,13 @@ end
 #
 # optparse
 #
-opts = {n: 1, l: 4}
+opts = {l: 4, w: 1}
 OptionParser.new do |opt|
-  opt.on('-n INT', "Upper times to use a single line (default: #{opts[:n]})") { |v|
-    opts[:n] = v.to_i
-  }
-  opt.on('-l INT', "Upper number of stations in the route (i.e. the length) (default: #{opts[:l]})") { |v|
+  opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
     opts[:l] = v.to_i
+  }
+  opt.on('-w INT', "Weight of train-change (default: #{opts[:l]})") { |v|
+    opts[:w] = v.to_i
   }
   opt.parse! ARGV
 end
@@ -88,18 +96,34 @@ end
 #
 # BFS
 #
+def neighbor_stations(u, s2l, l2s)
+  ret = []
+  s2l[u].each do |l|
+    l2s[l].each do |v|
+      ret << [v, l]
+    end
+  end
+  ret
+end
+
+def contains(history, u)
+  history.each do |v, _|
+    return true if v == u
+  end
+  false
+end
+
 ways = 0
-q = Queue.new
-q.push [[s_from]]
+q = PQueue.new
+q.push [0, [[s_from, nil]]]
 while not q.empty?
 
-  history = q.pop
-  break if history.size > opts[:l]
+  d, history = q.pop
+  next if history.size > opts[:l]
 
   # last node
-  last_item = history[history.size - 1]
-  last_station = last_item[0]
-  last_line = last_item[1]
+  last_station, last_line = history[history.size - 1]
+  # p ['pop', [d, last_station, last_line]]
   if last_station == s_to
     path_print history
     ways += 1
@@ -108,15 +132,13 @@ while not q.empty?
 
   break if s2l[last_station] == nil
 
-  s2l[last_station].each do |l|
-    next if l2s[l] == nil
-    next if last_line == l
-    next if line_times(l, history) + 1 > opts[:n]
-    l2s[l].each do |t|
-      next if last_station == t
-      next if t != s_to && (s2l[t] == nil || s2l[t].size == 1) # prune
-      q.push (history + [[t, l]])
-    end
+  neighbor_stations(last_station, s2l, l2s).each do |t, l|
+    # pruning
+    next if last_station == t || last_line == l
+    next if t != s_to && (s2l[t] == nil || s2l[t].size == 1)
+    next if contains(history, t)
+    d2 = d - distance[last_station][t] - opts[:w]
+    q.push [d2, history + [[t, l]]]
   end
 end
 
