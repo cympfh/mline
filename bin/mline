@@ -136,7 +136,7 @@ while not q.empty?
     # pruning
     next if last_station == t || last_line == l
     next if t != s_to && (s2l[t] == nil || s2l[t].size == 1)
-    next if contains(history, t)
+    next if t != s_to && contains(history, t)
     d2 = d - distance[last_station][t] - opts[:w]
     q.push [d2, history + [[t, l]]]
   end
