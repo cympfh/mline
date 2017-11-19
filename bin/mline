@@ -31,10 +31,43 @@ def station_name_trim(str)
 end
 
 #
+# optparse
+#
+opts = {l: 4, w: 2, margin: 2, jr: false}
+OptionParser.new do |opt|
+  opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
+    opts[:l] = v.to_i
+    puts '[WARN] -l specified too large (>5)' if opts[:l] > 5
+  }
+  opt.on('-w INT', "Weight of train-change (default: #{opts[:l]})") { |v|
+    opts[:w] = v.to_i
+  }
+  opt.on('-m INT', '--margin INT', "このくらいなら遅くても許す") { |v|
+    opts[:margin] = v.to_i
+    puts '[WARN] --margin specified too large (>5)' if opts[:margin] > 5
+    puts '[ERROR] --margin must be zero or positive' if opts[:margin] < 0
+  }
+  opt.on('-F', '--jr', "Allow fucking JR lines") {
+    opts[:jr] = true
+  }
+  opt.parse! ARGV
+end
+
+if ARGV.size < 2
+  usage
+end
+
+s_from = station_name_trim ARGV[0]
+s_to = station_name_trim ARGV[1]
+
+#
 # load database
 #
 data = JSON.load File.open("#{File.dirname(__FILE__)}/../lines.json").read
 data.each do |line|
+
+  next if !opts[:jr] && line['type'] == 'JR'
+
   lname = line['name']
   l2s[lname] = []
 
@@ -71,32 +104,8 @@ data.each do |line|
 end
 
 #
-# optparse
+# input validation
 #
-opts = {l: 4, w: 2, margin: 2}
-OptionParser.new do |opt|
-  opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
-    opts[:l] = v.to_i
-    puts '[WARN] -l specified too large (>5)' if opts[:l] > 5
-  }
-  opt.on('-w INT', "Weight of train-change (default: #{opts[:l]})") { |v|
-    opts[:w] = v.to_i
-  }
-  opt.on('--margin INT', "このくらいなら遅くても許す") { |v|
-    opts[:margin] = v.to_i
-    puts '[WARN] --margin specified too large (>5)' if opts[:margin] > 5
-    puts '[ERROR] --margin must be zero or positive' if opts[:margin] < 0
-  }
-  opt.parse! ARGV
-end
-
-if ARGV.size < 2
-  usage
-end
-
-s_from = station_name_trim ARGV[0]
-s_to = station_name_trim ARGV[1]
-
 if s2l[s_from] == nil
   puts "[ERROR] The station #{s_from} is unknown"
   exit
@@ -146,7 +155,7 @@ while not q.empty?
 
   # last node
   last_station, last_line = history[history.size - 1]
-  if last_station == s_to
+  if history.size > 1 && last_station == s_to
     path_print history
     ways += 1
     next if history.size > 1
