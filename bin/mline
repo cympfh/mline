@@ -33,7 +33,7 @@ end
 #
 # optparse
 #
-opts = {l: 4, w: 2, margin: 2, jr: false}
+opts = {l: 4, w: 2, margin: 3, jr: false}
 OptionParser.new do |opt|
   opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
     opts[:l] = v.to_i
@@ -42,7 +42,7 @@ OptionParser.new do |opt|
   opt.on('-w INT', "Weight of train-change (default: #{opts[:l]})") { |v|
     opts[:w] = v.to_i
   }
-  opt.on('-m INT', '--margin INT', "このくらいなら遅くても許す") { |v|
+  opt.on('-m INT', '--margin INT', "このくらいなら遅くても許す (default: #{opts[:margin]})") { |v|
     opts[:margin] = v.to_i
     STDERR.puts '[WARN] --margin specified too large (>5)' if opts[:margin] > 5
     STDERR.puts '[ERROR] --margin must be zero or positive' if opts[:margin] < 0
