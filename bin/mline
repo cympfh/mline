@@ -73,7 +73,7 @@ end
 #
 # optparse
 #
-opts = {l: 4, w: 1, margin: 2}
+opts = {l: 4, w: 2, margin: 2}
 OptionParser.new do |opt|
   opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
     opts[:l] = v.to_i
