@@ -19,6 +19,7 @@ def path_print(h)
     a += " -> #{item[0]} [#{item[1]}]"
   end
   puts a
+  STDOUT.flush
 end
 
 l2s = {} # l2s[line] = [station]
@@ -55,10 +56,16 @@ data.each do |line|
   end
 
   # distance pre-calc
+  inf = 1000000
   indices.keys.each do |u|
     distance[u] = {} if distance[u] == nil
     indices.keys.each do |v|
-      distance[u][v] = (indices[v] - indices[u]).abs
+      distance[u][v] = inf
+    end
+  end
+  indices.keys.each do |u|
+    indices.keys.each do |v|
+      distance[u][v] = [distance[u][v], (indices[v] - indices[u]).abs].min
     end
   end
 end
@@ -105,7 +112,7 @@ def neighbor_stations(u, s2l, l2s)
       ret << [v, l]
     end
   end
-  ret
+  ret.uniq
 end
 
 def contains(history, u)
@@ -125,7 +132,6 @@ while not q.empty?
 
   # last node
   last_station, last_line = history[history.size - 1]
-  # p ['pop', [d, last_station, last_line]]
   if last_station == s_to
     path_print history
     ways += 1
