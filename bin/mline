@@ -122,6 +122,16 @@ def contains(history, u)
   false
 end
 
+def line_count(history, line)
+  c = 0
+  history.each do |_, l|
+    c +=1 if l == line
+  end
+  c
+end
+
+memo = {}
+
 ways = 0
 q = PQueue.new
 q.push [0, [[s_from, nil]]]
@@ -145,7 +155,20 @@ while not q.empty?
     next if last_station == t || last_line == l
     next if t != s_to && (s2l[t] == nil || s2l[t].size == 1)
     next if t != s_to && contains(history, t)
+    next if t != s_to && line_count(history, l) >= 3
     d2 = d - distance[last_station][t] - opts[:w]
+    if last_station == s_from
+      p [d2, history + [[t, l]]]
+    end
+
+    if memo[t] == nil
+      memo[t] = d2
+    elsif memo[t] < d2
+      memo[t] = d2
+    else
+      next
+    end
+
     q.push [d2, history + [[t, l]]]
   end
 end
