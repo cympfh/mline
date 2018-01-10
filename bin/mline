@@ -128,9 +128,10 @@ def neighbor_stations(u, s2l, l2s)
   ret.uniq
 end
 
-def contains(history, u)
+def contains(history, u, distance)
   history.each do |v, _|
     return true if v == u
+    return true if distance[v][u] == 0
   end
   false
 end
@@ -167,7 +168,7 @@ while not q.empty?
     # pruning
     next if last_station == t || last_line == l
     next if t != s_to && (s2l[t] == nil || s2l[t].size == 1)
-    next if t != s_to && contains(history, t)
+    next if t != s_to && contains(history, t, distance)
     next if t != s_to && line_count(history, l) >= 3
     d2 = d - distance[last_station][t] - opts[:w]
 
