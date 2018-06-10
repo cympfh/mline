@@ -33,7 +33,7 @@ end
 #
 # optparse
 #
-opts = {l: 4, w: 2, margin: 3, jr: false}
+opts = {l: 4, w: 2, margin: 3, jr: false, debug: false}
 OptionParser.new do |opt|
   opt.on('-l INT', "Upper the route length (num of stations) (default: #{opts[:l]})") { |v|
     opts[:l] = v.to_i
@@ -49,6 +49,9 @@ OptionParser.new do |opt|
   }
   opt.on('-F', '--jr', "Allow fucking JR lines") {
     opts[:jr] = true
+  }
+  opt.on('--debug', "for debugging") {
+    opts[:debug] = true
   }
   opt.parse! ARGV
 end
@@ -153,6 +156,9 @@ while not q.empty?
 
   d, history = q.pop
   next if history.size > opts[:l]
+  if opts[:debug]
+    puts "Pop #{d} #{history}"
+  end
 
   # last node
   last_station, last_line = history[history.size - 1]
@@ -180,6 +186,9 @@ while not q.empty?
       next
     end
 
+    if opts[:debug]
+      puts "Push #{d2} #{[t, l]} #{history}"
+    end
     q.push [d2, history + [[t, l]]]
   end
 end
