@@ -25,6 +25,7 @@ end
 l2s = {} # l2s[line] = [station]
 s2l = {} # s2l[station] = [line]
 distance = {} # distance[station1][station2]; station1 and station2 must belong to a line
+station_id = {}  # station_id[station] = id
 
 def station_name_trim(str)
   str.gsub(/駅$/, '')
@@ -67,6 +68,7 @@ s_to = station_name_trim ARGV[1]
 # load database
 #
 data = JSON.load File.open("#{File.dirname(__FILE__)}/../lines.json").read
+sid = 0  # station id
 data.each do |line|
 
   next if !opts[:jr] && line['type'] == 'JR'
@@ -75,11 +77,11 @@ data.each do |line|
   l2s[lname] = []
 
   indices = {}
-  id = 0
+  id = 0  # id in this line
 
   line['stations'].each do |full|
-    full.split(':').each do |sname|
-      sname = station_name_trim sname
+    aliases = full.split(':').map{|name| station_name_trim name}
+    aliases.each do |sname|
       l2s[lname] << sname
       if s2l[sname]
         s2l[sname] << lname
@@ -89,6 +91,18 @@ data.each do |line|
       indices[sname] = id
     end
     id += 1
+
+    option = aliases.map{|sname| station_id[sname]}.select{|i| i != nil}
+    if option.size > 0
+      aliases.each do |sname|
+        station_id[sname] = option[0]
+      end
+    else
+      aliases.each do |sname|
+        station_id[sname] = sid
+      end
+      sid += 1
+    end
   end
 
   # distance pre-calc
@@ -150,6 +164,8 @@ end
 memo = {}
 
 ways = 0
+used = []
+
 q = PQueue.new
 q.push [0, [[s_from, nil]]]
 while not q.empty?
@@ -163,6 +179,14 @@ while not q.empty?
   # last node
   last_station, last_line = history[history.size - 1]
   if history.size > 1 && last_station == s_to
+
+    route = history.map{|item| station_id[item[0]]}
+    if used.index(route) != nil
+      next
+    else
+      used << route
+    end
+
     path_print history
     ways += 1
     next if history.size > 1
@@ -171,11 +195,13 @@ while not q.empty?
   break if s2l[last_station] == nil
 
   neighbor_stations(last_station, s2l, l2s).each do |t, l|
+
     # pruning
     next if last_station == t || last_line == l
     next if t != s_to && (s2l[t] == nil || s2l[t].size == 1)
     next if t != s_to && contains(history, t, distance)
     next if t != s_to && line_count(history, l) >= 3
+
     d2 = d - distance[last_station][t] - opts[:w]
 
     if memo[t] == nil
