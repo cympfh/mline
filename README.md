@@ -3,7 +3,7 @@
 Search your route.
 
 ```bash
-$ ./bin/mline <from-station> to-station>
+$ ./bin/mline <from-station> <to-station>
 
 $ ./bin/mline 神保町 神保町
 神保町 -> 大手町 [半蔵門線] -> 神保町 [三田線]
